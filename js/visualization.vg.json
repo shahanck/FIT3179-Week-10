@@ -8,12 +8,12 @@
   "data": [
     {
       "name": "source_0",
-      "url": "https://raw.githubusercontent.com/shahanck/FIT3179-Homework-task-3/main/ne_110m.topojson",
+      "url": "https://raw.githubusercontent.com/shahanck/FIT3179-Week-10/main/js/ne_110m.json",
       "format": {"type": "topojson", "feature": "ne_110m_admin_0_countries"}
     },
     {
       "name": "source_1",
-      "url": "https://raw.githubusercontent.com/shahanck/FIT3179-Homework-task-3/main/volcano_data_2010.csv",
+      "url": "https://raw.githubusercontent.com/shahanck/FIT3179-Week-10/main/data/volcano_data_2010.csv",
       "format": {"type": "csv", "delimiter": ","},
       "transform": [
         {
