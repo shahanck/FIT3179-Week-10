@@ -1,0 +1,308 @@
+{
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "background": "white",
+  "padding": 5,
+  "width": 500,
+  "height": 400,
+  "title": {"text": "Deaths by Volcanoes", "frame": "group"},
+  "style": "cell",
+  "data": [
+    {"name": "Year_store"},
+    {
+      "name": "source_0",
+      "url": "https://raw.githubusercontent.com/shahanck/FIT3179-Week-10/main/data/volcano_data_2010.csv",
+      "format": {"type": "csv", "delimiter": ","}
+    },
+    {
+      "name": "data_0",
+      "source": "source_0",
+      "transform": [{"type": "filter", "expr": "datum.DEATHS > 0"}]
+    },
+    {
+      "name": "data_1",
+      "source": "data_0",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": [
+            "Name",
+            "Year",
+            "Country",
+            "DEATHS",
+            "Latitude",
+            "Longitude",
+            "Elevation",
+            "Type",
+            "Status"
+          ],
+          "ops": ["sum"],
+          "fields": ["DEATHS"],
+          "as": ["sum_DEATHS"]
+        },
+        {
+          "type": "stack",
+          "groupby": ["Name"],
+          "field": "sum_DEATHS",
+          "sort": {"field": ["Year"], "order": ["descending"]},
+          "as": ["sum_DEATHS_start", "sum_DEATHS_end"],
+          "offset": "zero"
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum[\"sum_DEATHS\"]) && isFinite(+datum[\"sum_DEATHS\"])"
+        }
+      ]
+    },
+    {
+      "name": "data_2",
+      "source": "source_0",
+      "transform": [
+        {
+          "type": "aggregate",
+          "groupby": ["Name", "DEATHS"],
+          "ops": ["average"],
+          "fields": ["DEATHS"],
+          "as": ["average_DEATHS"]
+        },
+        {
+          "type": "filter",
+          "expr": "isValid(datum[\"average_DEATHS\"]) && isFinite(+datum[\"average_DEATHS\"])"
+        }
+      ]
+    }
+  ],
+  "signals": [
+    {
+      "name": "unit",
+      "value": {},
+      "on": [
+        {"events": "mousemove", "update": "isTuple(group()) ? group() : unit"}
+      ]
+    },
+    {
+      "name": "Year_Year_legend",
+      "value": null,
+      "on": [
+        {
+          "events": [
+            {
+              "source": "view",
+              "type": "click",
+              "markname": "Year_legend_symbols"
+            },
+            {
+              "source": "view",
+              "type": "click",
+              "markname": "Year_legend_labels"
+            },
+            {
+              "source": "view",
+              "type": "click",
+              "markname": "Year_legend_entries"
+            }
+          ],
+          "update": "datum.value || item().items[0].items[0].datum.value",
+          "force": true
+        },
+        {
+          "events": [{"source": "view", "type": "click"}],
+          "update": "!event.item || !datum ? null : Year_Year_legend",
+          "force": true
+        }
+      ]
+    },
+    {
+      "name": "Year",
+      "update": "vlSelectionResolve(\"Year_store\", \"union\", true, true)"
+    },
+    {
+      "name": "Year_tuple",
+      "update": "Year_Year_legend !== null ? {fields: Year_tuple_fields, values: [Year_Year_legend]} : null"
+    },
+    {"name": "Year_tuple_fields", "value": [{"type": "E", "field": "Year"}]},
+    {
+      "name": "Year_toggle",
+      "value": false,
+      "on": [
+        {
+          "events": {"merge": [{"source": "view", "type": "click"}]},
+          "update": "event.shiftKey"
+        }
+      ]
+    },
+    {
+      "name": "Year_modify",
+      "on": [
+        {
+          "events": {"signal": "Year_tuple"},
+          "update": "modify(\"Year_store\", Year_toggle ? null : Year_tuple, Year_toggle ? null : true, Year_toggle ? Year_tuple : null)"
+        }
+      ]
+    }
+  ],
+  "marks": [
+    {
+      "name": "layer_0_marks",
+      "type": "rect",
+      "style": ["bar"],
+      "interactive": true,
+      "from": {"data": "data_1"},
+      "encode": {
+        "update": {
+          "fill": {"scale": "color", "field": "Year"},
+          "opacity": [
+            {
+              "test": "!length(data(\"Year_store\")) || vlSelectionTest(\"Year_store\", datum)",
+              "value": 1
+            },
+            {"value": 0.2}
+          ],
+          "tooltip": {
+            "signal": "{\"Name\": isValid(datum[\"Name\"]) ? datum[\"Name\"] : \"\"+datum[\"Name\"], \"Country\": isValid(datum[\"Country\"]) ? datum[\"Country\"] : \"\"+datum[\"Country\"], \"DEATHS\": format(datum[\"DEATHS\"], \",\"), \"Latitude\": format(datum[\"Latitude\"], \"\"), \"Longitude\": format(datum[\"Longitude\"], \"\"), \"Elevation\": format(datum[\"Elevation\"], \"\"), \"Type\": isValid(datum[\"Type\"]) ? datum[\"Type\"] : \"\"+datum[\"Type\"], \"Status\": isValid(datum[\"Status\"]) ? datum[\"Status\"] : \"\"+datum[\"Status\"]}"
+          },
+          "ariaRoleDescription": {"value": "bar"},
+          "description": {
+            "signal": "\"Name of Volcano: \" + (isValid(datum[\"Name\"]) ? datum[\"Name\"] : \"\"+datum[\"Name\"]) + \"; Deaths: \" + (format(datum[\"sum_DEATHS\"], \"\")) + \"; Year: \" + (isValid(datum[\"Year\"]) ? datum[\"Year\"] : \"\"+datum[\"Year\"]) + \"; Name: \" + (isValid(datum[\"Name\"]) ? datum[\"Name\"] : \"\"+datum[\"Name\"]) + \"; Country: \" + (isValid(datum[\"Country\"]) ? datum[\"Country\"] : \"\"+datum[\"Country\"]) + \"; DEATHS: \" + (format(datum[\"DEATHS\"], \",\")) + \"; Latitude: \" + (format(datum[\"Latitude\"], \"\")) + \"; Longitude: \" + (format(datum[\"Longitude\"], \"\")) + \"; Elevation: \" + (format(datum[\"Elevation\"], \"\")) + \"; Type: \" + (isValid(datum[\"Type\"]) ? datum[\"Type\"] : \"\"+datum[\"Type\"]) + \"; Status: \" + (isValid(datum[\"Status\"]) ? datum[\"Status\"] : \"\"+datum[\"Status\"])"
+          },
+          "x": {"scale": "x", "field": "Name"},
+          "width": {"scale": "x", "band": 1},
+          "y": {"scale": "y", "field": "sum_DEATHS_end"},
+          "y2": {"scale": "y", "field": "sum_DEATHS_start"}
+        }
+      }
+    },
+    {
+      "name": "layer_1_marks",
+      "type": "text",
+      "style": ["text"],
+      "interactive": false,
+      "from": {"data": "data_2"},
+      "encode": {
+        "update": {
+          "dy": {"value": -15},
+          "fill": {"value": "black"},
+          "description": {
+            "signal": "\"Name: \" + (isValid(datum[\"Name\"]) ? datum[\"Name\"] : \"\"+datum[\"Name\"]) + \"; Average of DEATHS: \" + (format(datum[\"average_DEATHS\"], \"\")) + \"; DEATHS: \" + (format(datum[\"DEATHS\"], \"\"))"
+          },
+          "x": {"scale": "x", "field": "Name", "band": 0.5},
+          "y": {"scale": "y", "field": "average_DEATHS"},
+          "text": {"signal": "format(datum[\"DEATHS\"], \"\")"},
+          "align": {"value": "center"},
+          "baseline": {"value": "middle"}
+        }
+      }
+    }
+  ],
+  "scales": [
+    {
+      "name": "x",
+      "type": "band",
+      "domain": {
+        "fields": [
+          {"data": "data_0", "field": "Name"},
+          {"data": "data_2", "field": "Name"}
+        ],
+        "sort": true
+      },
+      "range": [0, {"signal": "width"}],
+      "paddingInner": 0.1,
+      "paddingOuter": 0.05
+    },
+    {
+      "name": "y",
+      "type": "linear",
+      "domain": {
+        "fields": [
+          {"data": "data_1", "field": "sum_DEATHS_start"},
+          {"data": "data_1", "field": "sum_DEATHS_end"},
+          {"data": "data_2", "field": "average_DEATHS"}
+        ]
+      },
+      "range": [{"signal": "height"}, 0],
+      "nice": true,
+      "zero": true
+    },
+    {
+      "name": "color",
+      "type": "ordinal",
+      "domain": {"data": "data_1", "field": "Year", "sort": true},
+      "range": "category"
+    }
+  ],
+  "axes": [
+    {
+      "scale": "y",
+      "orient": "left",
+      "gridScale": "x",
+      "grid": true,
+      "tickCount": {"signal": "ceil(height/40)"},
+      "domain": false,
+      "labels": false,
+      "aria": false,
+      "maxExtent": 0,
+      "minExtent": 0,
+      "ticks": false,
+      "zindex": 0
+    },
+    {
+      "scale": "x",
+      "orient": "bottom",
+      "grid": false,
+      "title": "Name of Volcano",
+      "labelAlign": "right",
+      "labelAngle": 270,
+      "labelBaseline": "middle",
+      "zindex": 0
+    },
+    {
+      "scale": "y",
+      "orient": "left",
+      "grid": false,
+      "title": "Deaths",
+      "labelOverlap": true,
+      "tickCount": {"signal": "ceil(height/40)"},
+      "zindex": 0
+    }
+  ],
+  "legends": [
+    {
+      "fill": "color",
+      "symbolType": "square",
+      "title": "Year",
+      "encode": {
+        "labels": {
+          "name": "Year_legend_labels",
+          "interactive": true,
+          "update": {
+            "opacity": [
+              {
+                "test": "(!length(data(\"Year_store\")) || (Year[\"Year\"] && indexof(Year[\"Year\"], datum.value) >= 0))",
+                "value": 1
+              },
+              {"value": 0.35}
+            ]
+          }
+        },
+        "symbols": {
+          "name": "Year_legend_symbols",
+          "interactive": true,
+          "update": {
+            "opacity": [
+              {
+                "test": "(!length(data(\"Year_store\")) || (Year[\"Year\"] && indexof(Year[\"Year\"], datum.value) >= 0))",
+                "value": 1
+              },
+              {"value": 0.35}
+            ]
+          }
+        },
+        "entries": {
+          "name": "Year_legend_entries",
+          "interactive": true,
+          "update": {"fill": {"value": "transparent"}}
+        }
+      }
+    }
+  ],
+  "config": {}
+}
